@@ -1,12 +1,12 @@
 /**
- * ViaDecide SPA Router
- * Routes: 50 registered + dynamic fallback for any new pages
+ * ViaDecide SPA Router  v3.0
  *
- * Clean URL resolution order for unknown routes:
- *   1. ROUTES map (exact match)
- *   2. /slug/index.html  (folder-based)
- *   3. /slug.html        (flat file fallback)
- *   4. Hard redirect     (true 404)
+ * Fixes vs previous versions:
+ *  - No HEAD-check fallback (useless: Vercel rewrites everything → index.html, HEAD always 200)
+ *  - Pages without <main id="app"> get full document.write() instead of broken redirect loop
+ *  - Dynamic slug convention: any unknown /slug → /slug/index.html automatically
+ *  - .html extension in URL silently stripped + clean URL replaceState
+ *  - Inline 404 error UI instead of hard redirect loop
  */
 const AppRouter = (function () {
     "use strict";
@@ -61,12 +61,29 @@ const AppRouter = (function () {
         "/viadecide-opportunity-radar": "/viadecide-opportunity-radar/index.html",
         "/viadecide-public-beta": "/viadecide-public-beta/index.html",
         "/viadecide-reality-check": "/viadecide-reality-check/index.html",
-        "/why-small-businesses-dont-need-saas": "/why-small-businesses-dont-need-saas/index.html"
+        "/why-small-businesses-dont-need-saas": "/why-small-businesses-dont-need-saas/index.html",
+        "/custom-calculator": "/custom-calculator/index.html"
     };
 
     const MOUNT_POINT = "#app";
 
-    // ── Link interception ──────────────────────────────────────────
+    // ── Resolve clean path → file URL to fetch ───────────────────
+    // No async HEAD checks — Vercel rewrites 404s to index.html so
+    // HEAD always returns 200 and can't tell us if a file exists.
+    function resolveFile(cleanPath) {
+        // 1. Explicit map hit
+        if (ROUTES[cleanPath]) return ROUTES[cleanPath];
+
+        // 2. Strip .html extension and retry map
+        const noExt = cleanPath.replace(/\.html?$/i, "");
+        if (noExt !== cleanPath && ROUTES[noExt]) return ROUTES[noExt];
+
+        // 3. Dynamic convention: /any-slug → /any-slug/index.html
+        //    Works for any new folder-based page without editing ROUTES
+        return (noExt || cleanPath) + "/index.html";
+    }
+
+    // ── Intercept same-origin link clicks ────────────────────────
     function bindLinks() {
         document.addEventListener("click", e => {
             const a = e.target.closest("a");
@@ -74,74 +91,61 @@ const AppRouter = (function () {
             const url = new URL(a.href);
             if (url.origin !== window.location.origin) return;
             if (url.hash && url.pathname === window.location.pathname) return;
-            if (/\.(pdf|png|jpg|jpeg|svg|css|js|glb|stl)$/i.test(url.pathname)) return;
+            if (/\.(pdf|png|jpg|jpeg|svg|css|js|glb|stl|zip|mp4|webp)$/i.test(url.pathname)) return;
             e.preventDefault();
             navigate(url.pathname + url.search + url.hash);
         });
-    }
-
-    // ── Resolve a clean path → fetchable file URL ─────────────────
-    // Returns a URL string if the file exists (HTTP 200), else null.
-    async function resolveFile(cleanPath) {
-        // 1. Explicit map hit
-        if (ROUTES[cleanPath]) return ROUTES[cleanPath];
-
-        // 2. Strip a .html suffix someone may have typed directly
-        //    e.g. /custom-calculator.html → try /custom-calculator first
-        const noExt = cleanPath.replace(/\.html?$/i, "");
-        if (noExt !== cleanPath && ROUTES[noExt]) return ROUTES[noExt];
-
-        // 3. Folder-based: /slug/index.html
-        const folderUrl = cleanPath + "/index.html";
-        try {
-            const r = await fetch(folderUrl, { method: "HEAD" });
-            if (r.ok) return folderUrl;
-        } catch (_) {}
-
-        // 4. Flat file: /slug.html  (legacy pages not yet moved)
-        const flatUrl = (noExt || cleanPath) + ".html";
-        try {
-            const r = await fetch(flatUrl, { method: "HEAD" });
-            if (r.ok) return flatUrl;
-        } catch (_) {}
-
-        return null; // nothing found
     }
 
     // ── Core navigate ─────────────────────────────────────────────
     async function navigate(path, isPopState = false) {
         if (!isPopState) window.history.pushState({}, "", path);
 
-        // Normalise: strip query for lookup, keep for history
+        // Normalise: strip trailing slash
         let cleanPath = path.split("?")[0].replace(/\/$/, "");
         if (cleanPath === "") cleanPath = "/";
 
-        // Show loading state
-        const mount = document.querySelector(MOUNT_POINT);
-        if (mount) mount.innerHTML = '<div style="padding:3rem;text-align:center;opacity:.4;font-family:Outfit,sans-serif">Loading…</div>';
-
-        // Resolve file to fetch
-        const fileToFetch = await resolveFile(cleanPath);
-
-        if (!fileToFetch) {
-            // Nothing found — real hard redirect (lets server/Vercel handle 404)
-            window.location.assign(path);
-            return;
+        // Strip .html extension → replace URL with clean version
+        if (/\.html?$/i.test(cleanPath)) {
+            const clean = cleanPath.replace(/\.html?$/i, "");
+            const qs    = path.includes("?") ? "?" + path.split("?")[1] : "";
+            window.history.replaceState({}, "", clean + qs);
+            cleanPath = clean;
         }
+
+        const fileToFetch = resolveFile(cleanPath);
+
+        // Loading state
+        const mount = document.querySelector(MOUNT_POINT);
+        if (mount) mount.innerHTML = '<div style="padding:3rem;text-align:center;opacity:.35;font-family:Outfit,sans-serif;font-size:.9rem">Loading…</div>';
 
         try {
             const response = await fetch(fileToFetch);
-            if (!response.ok) throw new Error("Fetch failed: " + fileToFetch);
-            const html = await response.text();
+            const html     = await response.text();
+
+            if (!response.ok) throw new Error("HTTP " + response.status + " — " + fileToFetch);
 
             const parser = new DOMParser();
             const doc    = parser.parseFromString(html, "text/html");
 
-            // Inject any new stylesheets from the fetched page
+            const newContent   = doc.querySelector(MOUNT_POINT);
+            const currentMount = document.querySelector(MOUNT_POINT);
+
+            // ── No #app in fetched page → full document replace ───
+            // Handles games, special UX pages, and any standalone page
+            // that manages its own layout (no shell wrapper needed)
+            if (!newContent || !currentMount) {
+                document.open("text/html", "replace");
+                document.write(html);
+                document.close();
+                return;
+            }
+
+            // ── SPA inject: stylesheets ───────────────────────────
             doc.querySelectorAll('link[rel="stylesheet"], style').forEach(node => {
                 if (node.tagName === "LINK") {
                     const href = node.getAttribute("href");
-                    if (!document.querySelector(`link[href="${href}"]`)) {
+                    if (href && !document.querySelector(`link[href="${href}"]`)) {
                         document.head.appendChild(node.cloneNode(true));
                     }
                 } else {
@@ -149,26 +153,28 @@ const AppRouter = (function () {
                 }
             });
 
-            const newContent   = doc.querySelector(MOUNT_POINT);
-            const currentMount = document.querySelector(MOUNT_POINT);
+            // ── SPA inject: content + scripts ────────────────────
+            currentMount.innerHTML = newContent.innerHTML;
+            if (doc.title) document.title = doc.title;
+            window.scrollTo(0, 0);
+            executeScripts(currentMount);
 
-            if (newContent && currentMount) {
-                currentMount.innerHTML = newContent.innerHTML;
-                if (doc.title) document.title = doc.title;
-                window.scrollTo(0, 0);
-                executeScripts(currentMount);
-            } else {
-                // Page has no #app mount — open it fully
-                window.location.assign(path);
-            }
         } catch (err) {
-            console.error("[VDRouter] Routing failed:", err);
+            console.error("[VDRouter]", err);
+            // Inline error — avoids hard redirect loop on Vercel
             const m = document.querySelector(MOUNT_POINT);
-            if (m) m.innerHTML = '<h2 style="padding:2rem;font-family:Outfit,sans-serif">Page not found</h2><a href="/" style="padding:0 2rem;color:#22b4a0">← Go Home</a>';
+            if (m) m.innerHTML = [
+                '<div style="padding:4rem 2rem;text-align:center;font-family:Outfit,sans-serif">',
+                '<div style="font-size:2.5rem;margin-bottom:1rem">🔍</div>',
+                '<h2 style="font-size:1.4rem;color:#f0ede6;margin-bottom:.6rem">Page not found</h2>',
+                '<p style="color:#8a8fa8;font-size:.875rem;margin-bottom:1.5rem">Could not load <code style="background:rgba(255,255,255,.07);padding:.15rem .45rem;border-radius:5px;font-size:.8rem">' + cleanPath + '</code></p>',
+                '<a href="/" style="display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.4rem;background:#1a8c7d;color:#fff;border-radius:10px;font-weight:600;font-size:.875rem;text-decoration:none">← Go Home</a>',
+                '</div>'
+            ].join("");
         }
     }
 
-    // ── Re-execute <script> tags injected via innerHTML ────────────
+    // ── Re-execute scripts after innerHTML swap ───────────────────
     function executeScripts(container) {
         container.querySelectorAll("script").forEach(old => {
             const s = document.createElement("script");
@@ -178,22 +184,18 @@ const AppRouter = (function () {
         });
     }
 
-    // ── Public API ─────────────────────────────────────────────────
-    function routes() { return ROUTES; }
+    function routes() { return { ...ROUTES }; }
 
     function init() {
         bindLinks();
         window.addEventListener("popstate", () => navigate(window.location.pathname, true));
-
-        // Handle direct URL load (e.g. user visits /pricing directly)
-        const initial = window.location.pathname;
-        const clean   = initial.replace(/\/$/, "") || "/";
-        if (clean !== "/") navigate(initial, true);
+        const cleanInit = window.location.pathname.replace(/\/$/, "") || "/";
+        if (cleanInit !== "/") navigate(window.location.pathname, true);
     }
 
     return { init, navigate, routes };
 })();
 
-// Expose as both AppRouter and VDRouter (legacy compat)
-window.VDRouter = AppRouter;
+window.VDRouter  = AppRouter;
+window.AppRouter = AppRouter;
 document.addEventListener("DOMContentLoaded", () => AppRouter.init());
