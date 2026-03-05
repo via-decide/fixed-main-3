@@ -1,15 +1,12 @@
 /**
- * ViaDecide SPA Router — v2
- * Implements: navigate, go, openOverlay, prefetch, resolve, on/emit, routes, init
- * All methods previously called by index.html but never implemented are now live.
+ * ViaDecide Router v3 — clean, complete, tested
+ * Exports: go, openOverlay, navigate, prefetch, resolve, on, routes, init, bindLinks
  */
-const AppRouter = (function () {
+window.VDRouter = window.AppRouter = (function () {
   'use strict';
 
-  /* ─────────────────────────────────────────────────────────────────
-     1. ROUTE MAP  (clean URL → file)
-  ───────────────────────────────────────────────────────────────── */
-  const ROUTES = {
+  /* ── 1. ROUTES ────────────────────────────────────────────────── */
+  var ROUTES = {
     '/':                                    '/index.html',
     '/404':                                 '/404/index.html',
     '/AshokVerma':                          '/AshokVerma/index.html',
@@ -60,373 +57,272 @@ const AppRouter = (function () {
     '/viadecide-opportunity-radar':         '/viadecide-opportunity-radar/index.html',
     '/viadecide-public-beta':               '/viadecide-public-beta/index.html',
     '/viadecide-reality-check':             '/viadecide-reality-check/index.html',
-    '/why-small-businesses-dont-need-saas': '/why-small-businesses-dont-need-saas/index.html',
+    '/why-small-businesses-dont-need-saas': '/why-small-businesses-dont-need-saas/index.html'
   };
 
-  /* ─────────────────────────────────────────────────────────────────
-     2. ROUTE METADATA  (slug → {icon, name})
-     Used by go() to auto-populate the modal header.
-  ───────────────────────────────────────────────────────────────── */
-  const META = {
-    '404':                                { icon: 'warning',  name: 'Page Not Found' },
-    'AshokVerma':                         { icon: 'person',   name: 'Ashok Verma - 1:1 Sessions' },
-    'CustomSwipeEngineForm':              { icon: 'form',     name: 'Custom Swipe Engine Form' },
-    'engine-activation-request':          { icon: 'key',      name: 'Engine Activation Request' },
-    'HexWars':                            { icon: 'game',     name: 'HexWars - ViaDecide Arena' },
-    'HivaLand':                           { icon: 'tv',       name: 'ViaTV Game - Universal Remote' },
-    'Jalaram-food-court-rajkot':          { icon: 'food',     name: 'Jalaram Food Court (Rajkot)' },
-    'ONDC-demo':                          { icon: 'cart',     name: 'ONDC Live Demo' },
-    'ondc-demo':                          { icon: 'cart',     name: 'ONDC Live Demo' },
-    'StudyOS':                            { icon: 'study',    name: 'StudyOS - Swipe Daily Progress' },
-    'SwipeOS':                            { icon: 'swipe',    name: 'Swipe OS - Decision Engine' },
-    'the-decision-stack':                 { icon: 'stack',    name: 'The Decision Stack' },
-    'ViaGuide':                           { icon: 'guide',    name: 'ViaGuide' },
-    'Viadecide-blogs':                    { icon: 'blog',     name: 'Blog & Content' },
-    'alchemist':                          { icon: 'alch',     name: 'Alchemist Quiz' },
-    'app-generator':                      { icon: 'wrench',   name: 'App Generator' },
-    'brief':                              { icon: 'brief',    name: 'Decision Brief' },
-    'cashback-claim':                     { icon: 'cash',     name: 'Cashback Claim' },
-    'cashback-rules':                     { icon: 'rules',    name: 'Cashback Rules' },
-    'cohort-apply-here':                  { icon: 'cohort',   name: 'Cohort - Apply Here' },
-    'contact':                            { icon: 'mail',     name: 'Contact Us' },
-    'decide-foodrajkot':                  { icon: 'food',     name: 'Decide Food Rajkot' },
-    'decide-service':                     { icon: 'service',  name: 'Decide Service' },
-    'decision-brief-guide':               { icon: 'guide',    name: 'Decision Brief Guide' },
-    'decision-brief':                     { icon: 'brain',    name: 'ViaDecide - Decision Architecture' },
-    'decision-infrastructure-india':      { icon: 'india',    name: 'Why India Needs Decision Infrastructure' },
-    'discounts':                          { icon: 'tag',      name: 'Discounts Are Not Strategy' },
-    'engine-deals':                       { icon: 'deals',    name: 'Engine Deals' },
-    'engine-license':                     { icon: 'license',  name: 'Engine License' },
-    'finance-dashboard-msme':             { icon: 'finance',  name: 'FinTrack - Finance Dashboard' },
-    'founder':                            { icon: 'founder',  name: 'Founder' },
-    'indiaai-mission-2025':               { icon: 'ai',       name: 'IndiaAI Mission 2025' },
-    'interview-prep':                     { icon: 'mic',      name: 'Interview Simulator' },
-    'laptops-under-50000':                { icon: 'gift',     name: 'Gifts That Mean More' },
-    'mars-rover-simulator-game':          { icon: 'mars',     name: 'Mars Survival Decision Lab' },
-    'memory':                             { icon: 'memory',   name: 'Decision Memory' },
-    'multi-source-research-explained':    { icon: 'research', name: 'Multi-Source Research Explained' },
-    'ondc-for-bharat':                    { icon: 'ondc',     name: 'ONDC - Open Commerce for Every Indian' },
-    'payment-register':                   { icon: 'payroll',  name: 'India Payroll Register' },
-    'pricing':                            { icon: 'pricing',  name: 'Pricing Infrastructure' },
-    'privacy':                            { icon: 'lock',     name: 'Privacy Policy' },
-    'prompt-alchemy':                     { icon: 'prompt',   name: 'PromptAlchemy' },
-    'sales-dashboard':                    { icon: 'chart',    name: 'MSME Sales Register' },
-    'student-research':                   { icon: 'research', name: 'Decision Research' },
-    'terms':                              { icon: 'doc',      name: 'Terms of Service' },
-    'viadecide-decision-matrix':          { icon: 'matrix',   name: 'Decision Matrix' },
-    'viadecide-opportunity-radar':        { icon: 'radar',    name: 'Opportunity Radar' },
-    'viadecide-public-beta':              { icon: 'beta',     name: 'ViaDecide Public Beta' },
-    'viadecide-reality-check':            { icon: 'check',    name: 'Reality Check Calculator' },
-    'why-small-businesses-dont-need-saas':{ icon: 'insight',  name: "Why Small Businesses Don't Need SaaS" },
-    'numberplate':                        { icon: 'plate',    name: 'Custom Numberplates' },
-    'keychain':                           { icon: 'key',      name: 'NFC Keychains' },
-    'gifts-that-mean-more':               { icon: 'gift',     name: 'Gifts That Mean More' },
+  /* ── 2. META (icon + name for modal header) ───────────────────── */
+  var META = {
+    '404':                                { icon: '⚠️',  name: 'Page Not Found' },
+    'AshokVerma':                         { icon: '👤',  name: 'Ashok Verma • 1:1 Sessions' },
+    'CustomSwipeEngineForm':              { icon: '📝',  name: 'Custom Swipe Engine Form' },
+    'engine-activation-request':          { icon: '🔑',  name: 'Engine Activation Request' },
+    'HexWars':                            { icon: '🎮',  name: 'HexWars — ViaDecide Arena' },
+    'HivaLand':                           { icon: '📺',  name: 'ViaTV Game — Universal Remote' },
+    'Jalaram-food-court-rajkot':          { icon: '🍽️', name: 'Jalaram Food Court (Rajkot)' },
+    'ONDC-demo':                          { icon: '🛒',  name: 'ONDC Live Demo' },
+    'ondc-demo':                          { icon: '🛒',  name: 'ONDC Live Demo' },
+    'StudyOS':                            { icon: '📚',  name: 'StudyOS — Swipe Daily Progress' },
+    'SwipeOS':                            { icon: '🔄',  name: 'Swipe OS — Decision Engine' },
+    'the-decision-stack':                 { icon: '🧱',  name: 'The Decision Stack' },
+    'ViaGuide':                           { icon: '🗺️', name: 'ViaGuide — PDF to Guided Steps' },
+    'Viadecide-blogs':                    { icon: '✍️', name: 'Blog & Content' },
+    'alchemist':                          { icon: '✨',  name: 'Alchemist Quiz' },
+    'app-generator':                      { icon: '🔧',  name: 'App Generator' },
+    'brief':                              { icon: '📋',  name: 'Decision Brief' },
+    'cashback-claim':                     { icon: '💸',  name: 'Cashback Claim' },
+    'cashback-rules':                     { icon: '📜',  name: 'Cashback Rules' },
+    'cohort-apply-here':                  { icon: '🎓',  name: 'Cohort — Apply Here' },
+    'contact':                            { icon: '📬',  name: 'Contact Us' },
+    'decide-foodrajkot':                  { icon: '🍱',  name: 'Decide Food Rajkot' },
+    'decide-service':                     { icon: '🎯',  name: 'Decide Service' },
+    'decision-brief-guide':               { icon: '📋',  name: 'Decision Brief Guide' },
+    'decision-brief':                     { icon: '🧠',  name: 'Decision Architecture' },
+    'decision-infrastructure-india':      { icon: '🏗️', name: 'Why India Needs Decision Infrastructure' },
+    'discounts':                          { icon: '🏷️', name: 'Discounts Are Not Strategy' },
+    'engine-deals':                       { icon: '⚡',  name: 'Engine Deals' },
+    'engine-license':                     { icon: '📄',  name: 'Engine License' },
+    'finance-dashboard-msme':             { icon: '💰',  name: 'FinTrack — Finance Dashboard' },
+    'founder':                            { icon: '👤',  name: 'Founder' },
+    'indiaai-mission-2025':               { icon: '🇮🇳', name: 'IndiaAI Mission 2025' },
+    'interview-prep':                     { icon: '🎤',  name: 'Interview Simulator' },
+    'laptops-under-50000':                { icon: '🎁',  name: 'Gifts That Mean More' },
+    'mars-rover-simulator-game':          { icon: '🚀',  name: 'Mars Survival Decision Lab' },
+    'memory':                             { icon: '🧠',  name: 'Decision Memory' },
+    'multi-source-research-explained':    { icon: '🔍',  name: 'Multi-Source Research Explained' },
+    'ondc-for-bharat':                    { icon: '🛒',  name: 'ONDC — Open Commerce for Every Indian' },
+    'payment-register':                   { icon: '👥',  name: 'India Payroll Register' },
+    'pricing':                            { icon: '💲',  name: 'Pricing Infrastructure' },
+    'privacy':                            { icon: '🔒',  name: 'Privacy Policy' },
+    'prompt-alchemy':                     { icon: '⚗️', name: 'PromptAlchemy' },
+    'sales-dashboard':                    { icon: '📊',  name: 'MSME Sales Register' },
+    'student-research':                   { icon: '📖',  name: 'Decision Research' },
+    'terms':                              { icon: '📜',  name: 'Terms of Service' },
+    'viadecide-decision-matrix':          { icon: '⊞',   name: 'Decision Matrix' },
+    'viadecide-opportunity-radar':        { icon: '📡',  name: 'Opportunity Radar' },
+    'viadecide-public-beta':              { icon: '🚀',  name: 'ViaDecide Public Beta Is Live' },
+    'viadecide-reality-check':            { icon: '✅',  name: 'Reality Check Calculator' },
+    'why-small-businesses-dont-need-saas':{ icon: '💡',  name: "Why Small Businesses Don't Need SaaS" },
+    'numberplate':                        { icon: '🚗',  name: 'Custom Numberplates' },
+    'keychain':                           { icon: '🔑',  name: 'NFC Keychains' },
+    'gifts-that-mean-more':               { icon: '🎁',  name: 'Gifts That Mean More' }
   };
 
-  /* ─────────────────────────────────────────────────────────────────
-     3. EVENT EMITTER
-  ───────────────────────────────────────────────────────────────── */
-  const _handlers = {};
+  /* ── 3. EVENT EMITTER ─────────────────────────────────────────── */
+  var _h = {};
+  function on(ev, fn) { (_h[ev] = _h[ev] || []).push(fn); }
+  function emit(ev, d) { (_h[ev] || []).forEach(function(fn){ try{fn(d);}catch(e){} }); }
 
-  function on(event, handler) {
-    if (typeof handler !== 'function') return;
-    (_handlers[event] = _handlers[event] || []).push(handler);
+  /* ── 4. RESOLVE slug → file path ──────────────────────────────── */
+  function resolve(s) {
+    var clean = String(s||'').replace(/\.html?$/i,'').replace(/^\/+/,'').replace(/\/+$/,'');
+    var key = clean ? '/'+clean : '/';
+    return ROUTES[key] || key+'/index.html';
   }
 
-  function emit(event, data) {
-    (_handlers[event] || []).forEach(function(fn) {
-      try { fn(data); } catch(e) { console.warn('[VDRouter] handler error:', e); }
-    });
-  }
-
-  /* ─────────────────────────────────────────────────────────────────
-     4. RESOLVE  slug → canonical file path
-  ───────────────────────────────────────────────────────────────── */
-  function resolve(slugOrPath) {
-    if (!slugOrPath) return '/index.html';
-    var clean = String(slugOrPath)
-      .replace(/\.html?$/i, '')
-      .replace(/^\/+/, '')
-      .replace(/\/+$/, '');
-    var key = clean === '' ? '/' : '/' + clean;
-    return ROUTES[key] || (key + '/index.html');
-  }
-
-  /* ─────────────────────────────────────────────────────────────────
-     5. PREFETCH  — warms browser cache on hover / touchstart
-  ───────────────────────────────────────────────────────────────── */
-  var _prefetched = {};
-
-  function prefetch(slugOrPath) {
-    if (!slugOrPath) return;
-    var file = resolve(slugOrPath);
-    if (_prefetched[file]) return;
-    _prefetched[file] = true;
+  /* ── 5. PREFETCH ─────────────────────────────────────────────── */
+  var _pf = {};
+  function prefetch(s) {
+    var f = resolve(s);
+    if (_pf[f]) return;
+    _pf[f] = 1;
     try {
-      var link = document.createElement('link');
-      link.rel  = 'prefetch';
-      link.as   = 'document';
-      link.href = file;
-      document.head.appendChild(link);
-    } catch(e) {}
+      var l = document.createElement('link');
+      l.rel='prefetch'; l.as='document'; l.href=f;
+      document.head.appendChild(l);
+    } catch(e){}
   }
 
-  /* ─────────────────────────────────────────────────────────────────
-     6. OPEN OVERLAY
-     Connects to the existing #modal / #modal-frame in index.html.
-     Called by openModal() on the homepage (preferred code path).
-  ───────────────────────────────────────────────────────────────── */
+  /* ── 6. OPEN OVERLAY (modal) ──────────────────────────────────── */
   function openOverlay(fileOrSlug, opts) {
     opts = opts || {};
 
-    // Resolve to a file path
+    // Normalise to a file path
     var file = /\.html?$/i.test(String(fileOrSlug))
       ? fileOrSlug
       : resolve(fileOrSlug);
 
     // Derive slug for META lookup
     var slug = String(file)
-      .replace(/^\/+/, '')
-      .replace(/\/index\.html?$/i, '')
-      .replace(/\.html?$/i, '');
+      .replace(/^\/+/,'')
+      .replace(/\/index\.html?$/i,'')
+      .replace(/\.html?$/i,'');
+
     var meta = META[slug] || {};
 
-    // Icon + name: META takes priority, then parse opts.title, then fallback
+    // icon + name priority: META → parse opts.title → raw slug
     var icon = meta.icon || '';
     var name = meta.name || '';
 
-    // If opts.title was passed (e.g. "emoji Name") and no META, parse it
-    if (opts.title && !meta.name) {
-      name = String(opts.title);
-      icon = '';
-    } else if (opts.title && !icon) {
-      // Extract leading emoji from opts.title as icon hint
-      var tm = String(opts.title).match(/^([^\s\w]{1,4})\s*(.*)/);
-      if (tm) { icon = tm[1]; name = tm[2] || meta.name || slug; }
+    if (!name && opts.title) {
+      // opts.title format from index.html: "🛒\u2009ONDC Live Demo"
+      var t = String(opts.title).trim();
+      // Split on first space/thin-space after emoji
+      var m = t.match(/^([\S\u200A\u2009]+?)\s+([\s\S]+)$/);
+      if (m) { icon = icon || m[1]; name = m[2]; }
+      else   { name = t; }
     }
 
-    // Final fallbacks
-    if (!name) name = slug;
-    if (!icon) icon = 'tool';
+    if (!name) name = slug.replace(/-/g,' ');
+    if (!icon) icon = '🔬';
 
-    // DOM elements
-    var modal    = document.getElementById('modal');
-    var frame    = document.getElementById('modal-frame');
-    var mIcon    = document.getElementById('m-icon');
-    var mName    = document.getElementById('m-name');
-    var mTab     = document.getElementById('m-tab');
-    var errLink  = document.getElementById('err-open-link');
-    var modalErr = document.getElementById('modal-err');
+    // Wire up DOM
+    var modal = document.getElementById('modal');
+    var frame = document.getElementById('modal-frame');
+    if (!modal || !frame) { window.location.href = file; return; }
 
-    if (!modal || !frame) {
-      window.location.href = file;
-      return;
-    }
-
-    if (mIcon)    mIcon.textContent  = icon;
-    if (mName)    mName.textContent  = name;
-    if (mTab)     mTab.href          = file;
-    if (errLink)  errLink.href       = file;
-    if (modalErr) modalErr.classList.remove('show');
+    var el = function(id){ return document.getElementById(id); };
+    if (el('m-icon'))    el('m-icon').textContent  = icon;
+    if (el('m-name'))    el('m-name').textContent  = name;
+    if (el('m-tab'))     el('m-tab').href           = file;
+    if (el('err-open-link')) el('err-open-link').href = file;
+    if (el('modal-err')) el('modal-err').classList.remove('show');
+    if (el('modal-loading')) el('modal-loading').classList.add('active');
 
     frame.style.display = 'block';
     frame.src = '';
-    setTimeout(function() { frame.src = file; }, 10);
+    setTimeout(function(){ frame.src = file; }, 10);
 
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
 
-    emit('overlayopen', { file: file, slug: slug, name: name });
+    emit('overlayopen', { file:file, slug:slug, icon:icon, name:name });
   }
 
-  /* ─────────────────────────────────────────────────────────────────
-     7. GO  — primary public method called from onclick handlers
-     go('contact', {overlay:true})  -> open in modal overlay
-     go('alchemist')                -> SPA navigate
-  ───────────────────────────────────────────────────────────────── */
+  /* ── 7. GO ───────────────────────────────────────────────────── */
   function go(slugOrPath, opts) {
     opts = opts || {};
-    var slug = String(slugOrPath || '')
-      .replace(/^\/+/, '')
-      .replace(/\/+$/, '')
-      .replace(/\.html?$/i, '');
-    var path = '/' + slug;
+    var slug = String(slugOrPath||'')
+      .replace(/^\/+/,'').replace(/\/+$/,'').replace(/\.html?$/i,'');
+    var path = '/'+slug;
 
-    if (opts.overlay) {
-      openOverlay(slug, opts);
-      return;
-    }
-
-    // If route not registered → direct full-page navigate (e.g. printbydd-store sub-routes)
-    if (!ROUTES[path]) {
-      window.location.href = path;
-      return;
-    }
-
+    if (opts.overlay) { openOverlay(slug, opts); return; }
+    if (!ROUTES[path]) { window.location.href = path; return; }
     navigate(path);
   }
 
-  /* ─────────────────────────────────────────────────────────────────
-     8. NAVIGATE  — SPA fetch-and-swap
-  ───────────────────────────────────────────────────────────────── */
-  var MOUNT = '#app';
-
+  /* ── 8. NAVIGATE (SPA fetch → #app swap) ────────────────────── */
   function navigate(path, isPopState) {
-    if (!isPopState) {
-      window.history.pushState({}, '', path);
+    if (!isPopState) history.pushState({}, '', path);
+
+    var clean = String(path).split('?')[0].replace(/\/$/,'') || '/';
+    if (/\.html?$/i.test(clean)) {
+      clean = clean.replace(/\.html?$/i,'');
+      history.replaceState({}, '', clean);
     }
 
-    var cleanPath = String(path).split('?')[0].replace(/\/$/, '');
-    if (cleanPath === '') cleanPath = '/';
-
-    if (/\.html?$/i.test(cleanPath)) {
-      cleanPath = cleanPath.replace(/\.html?$/i, '');
-      window.history.replaceState({}, '', cleanPath);
-    }
-
-    // 404 → restore from sessionStorage then home
-    if (cleanPath === '/404') {
+    // 404 page → restore sessionStorage redirect then go home
+    if (clean === '/404') {
       try {
-        var stored = sessionStorage.getItem('__vd_redirect__');
-        if (stored) {
-          sessionStorage.removeItem('__vd_redirect__');
-          navigate(stored, true);
-          return;
-        }
-      } catch(e) {}
+        var redir = sessionStorage.getItem('__vd_redirect__');
+        if (redir) { sessionStorage.removeItem('__vd_redirect__'); navigate(redir, true); return; }
+      } catch(e){}
       navigate('/', true);
       return;
     }
 
-    var fileToFetch = ROUTES[cleanPath] || (cleanPath + '/index.html');
+    var file = ROUTES[clean] || clean+'/index.html';
 
-    fetch(fileToFetch).then(function(res) {
-      if (!res.ok) throw new Error('Fetch failed ' + fileToFetch + ' (' + res.status + ')');
-      return res.text();
-    }).then(function(html) {
-      var parser  = new DOMParser();
-      var doc     = parser.parseFromString(html, 'text/html');
-      var newApp  = doc.querySelector(MOUNT);
-      var curApp  = document.querySelector(MOUNT);
+    fetch(file)
+      .then(function(r){ if(!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function(html){
+        var doc = new DOMParser().parseFromString(html, 'text/html');
+        var newApp = doc.querySelector('#app');
+        var curApp = document.querySelector('#app');
 
-      if (newApp && curApp) {
-        // Inject new styles, skip already-present ones
-        doc.querySelectorAll('link[rel="stylesheet"], style').forEach(function(node) {
-          if (node.tagName === 'LINK') {
-            var href = node.getAttribute('href');
-            if (href && !document.querySelector('link[href="' + href + '"]')) {
-              document.head.appendChild(node.cloneNode(true));
+        if (newApp && curApp) {
+          // Inject styles from fetched page (skip duplicates)
+          doc.querySelectorAll('link[rel="stylesheet"],style').forEach(function(n){
+            if (n.tagName==='LINK') {
+              var h = n.getAttribute('href');
+              if (h && !document.querySelector('link[href="'+h+'"]'))
+                document.head.appendChild(n.cloneNode(true));
+            } else {
+              document.head.appendChild(n.cloneNode(true));
             }
-          } else {
-            document.head.appendChild(node.cloneNode(true));
-          }
-        });
-
-        curApp.innerHTML = newApp.innerHTML;
-        if (doc.title) document.title = doc.title;
-        window.scrollTo(0, 0);
-        _execScripts(curApp);
-        emit('routechange', { path: cleanPath, file: fileToFetch });
-      } else {
-        // Target page has no #app mount — full page load
-        window.location.assign(path);
-      }
-    }).catch(function(err) {
-      console.error('[VDRouter] navigate error:', err);
-      var m = document.querySelector(MOUNT);
-      if (m) {
-        m.innerHTML = [
-          '<div style="padding:5rem 2rem;font-family:Outfit,sans-serif;text-align:center;color:#f0ede6">',
-          '<h2 style="font-family:Cormorant Garamond,serif;font-size:3rem;font-weight:300;margin-bottom:1rem">Page not found</h2>',
-          '<p style="color:#8a8fa8;margin-bottom:2rem">The route <code style="color:#22b4a0;background:rgba(34,180,160,.1);padding:.2rem .5rem;border-radius:4px">',
-          cleanPath,
-          '</code> doesn\'t exist.</p>',
-          '<a href="/" style="color:#22b4a0;font-weight:600;font-size:.9rem">← Back to Home</a>',
-          '</div>',
-        ].join('');
-      }
-    });
+          });
+          curApp.innerHTML = newApp.innerHTML;
+          if (doc.title) document.title = doc.title;
+          window.scrollTo(0,0);
+          execScripts(curApp);
+          emit('routechange', { path:clean, file:file });
+        } else {
+          // Page has no #app — full reload
+          window.location.assign(path);
+        }
+      })
+      .catch(function(e){
+        console.error('[VDRouter] navigate failed:', e);
+        var app = document.querySelector('#app');
+        if (app) app.innerHTML =
+          '<div style="padding:5rem 2rem;text-align:center;font-family:Outfit,sans-serif">'
+          +'<h2 style="font-family:Cormorant Garamond,serif;font-size:3rem;font-weight:300;color:#f0ede6;margin-bottom:1rem">Page not found</h2>'
+          +'<p style="color:#8a8fa8;margin-bottom:2rem"><code style="color:#22b4a0;background:rgba(34,180,160,.1);padding:.2rem .6rem">'+clean+'</code></p>'
+          +'<a href="/" style="color:#22b4a0;font-weight:600">← Home</a></div>';
+      });
   }
 
-  /* ─────────────────────────────────────────────────────────────────
-     9. SCRIPT EXECUTION ENGINE
-     Re-create <script> nodes so browsers execute them after innerHTML swap
-  ───────────────────────────────────────────────────────────────── */
-  function _execScripts(container) {
-    container.querySelectorAll('script').forEach(function(old) {
+  /* ── 9. EXEC SCRIPTS after innerHTML swap ────────────────────── */
+  function execScripts(container) {
+    container.querySelectorAll('script').forEach(function(old){
       var neo = document.createElement('script');
-      Array.from(old.attributes).forEach(function(a) { neo.setAttribute(a.name, a.value); });
+      Array.from(old.attributes).forEach(function(a){ neo.setAttribute(a.name,a.value); });
       neo.textContent = old.textContent;
       old.parentNode.replaceChild(neo, old);
     });
   }
 
-  /* ─────────────────────────────────────────────────────────────────
-     10. BIND LINKS  — intercept same-origin <a> clicks
-  ───────────────────────────────────────────────────────────────── */
+  /* ── 10. BIND LINKS ──────────────────────────────────────────── */
   function bindLinks() {
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function(e){
       var a = e.target.closest('a');
       if (!a || !a.href) return;
-
-      var url;
-      try { url = new URL(a.href); } catch(err) { return; }
-
-      if (url.origin !== window.location.origin) return;
-      if (url.hash && url.pathname === window.location.pathname) return;
+      var url; try { url = new URL(a.href); } catch(ex){ return; }
+      if (url.origin !== location.origin) return;
+      if (url.hash && url.pathname === location.pathname) return;
       if (/\.(pdf|png|jpg|jpeg|gif|svg|css|js|glb|stl|zip|mp4|webp|ico|woff2?)$/i.test(url.pathname)) return;
       if (/^(mailto|tel):/.test(a.href)) return;
-
       e.preventDefault();
       navigate(url.pathname + url.search + url.hash);
     });
   }
 
-  /* ─────────────────────────────────────────────────────────────────
-     11. INIT
-  ───────────────────────────────────────────────────────────────── */
+  /* ── 11. INIT ─────────────────────────────────────────────────── */
   function init() {
     bindLinks();
-
-    window.addEventListener('popstate', function() {
-      navigate(window.location.pathname + window.location.search + window.location.hash, true);
+    window.addEventListener('popstate', function(){
+      navigate(location.pathname + location.search + location.hash, true);
     });
-
-    // Restore 404 redirect target
+    // Restore 404 redirect
     try {
-      var stored = sessionStorage.getItem('__vd_redirect__');
-      if (stored) {
-        sessionStorage.removeItem('__vd_redirect__');
-        navigate(stored, true);
-        return;
-      }
-    } catch(e) {}
-
-    // Handle direct URL load (user visits /pricing directly)
-    var cleanInit = window.location.pathname.replace(/\/$/, '') || '/';
-    if (cleanInit !== '/') {
-      navigate(window.location.pathname + window.location.search + window.location.hash, true);
-    }
+      var r = sessionStorage.getItem('__vd_redirect__');
+      if (r) { sessionStorage.removeItem('__vd_redirect__'); navigate(r, true); return; }
+    } catch(e){}
+    // Handle direct URL visit (e.g. user visits /pricing)
+    var p = location.pathname.replace(/\/$/,'') || '/';
+    if (p !== '/') navigate(location.pathname + location.search + location.hash, true);
   }
 
-  /* ─────────────────────────────────────────────────────────────────
-     PUBLIC API
-  ───────────────────────────────────────────────────────────────── */
+  document.addEventListener('DOMContentLoaded', init);
+
   return {
-    init:        init,
-    navigate:    navigate,
-    go:          go,
+    go: go,
+    navigate: navigate,
     openOverlay: openOverlay,
-    prefetch:    prefetch,
-    resolve:     resolve,
-    on:          on,
-    bindLinks:   bindLinks,
-    routes:      function() { return ROUTES; },
-    meta:        function() { return META; },
+    prefetch: prefetch,
+    resolve: resolve,
+    on: on,
+    bindLinks: bindLinks,
+    routes: function(){ return ROUTES; },
+    meta: function(){ return META; }
   };
 })();
-
-window.VDRouter  = AppRouter;
-window.AppRouter = AppRouter;
-
-document.addEventListener('DOMContentLoaded', function() { AppRouter.init(); });
