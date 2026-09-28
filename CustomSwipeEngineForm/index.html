@@ -85,6 +85,38 @@ h1{
   opacity:1;
 }
 
+.controls {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.controls .nav-row {
+  display: flex;
+  gap: 12px;
+}
+.control-btn {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: var(--text);
+  padding: 16px;
+  border-radius: 12px;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  cursor: pointer;
+  flex: 1;
+  text-align: center;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  user-select: none;
+}
+.control-btn:hover, .control-btn:active {
+  background: #2a2a2a;
+  transform: scale(0.98);
+}
+.control-btn.select-btn { border-color: var(--go); color: var(--go); background: rgba(0, 230, 118, 0.05); }
+.control-btn.skip-btn { border-color: #ff5252; color: #ff5252; background: rgba(255, 82, 82, 0.05); }
+
 .hint{
   margin-top:40px;
   font-family:var(--mono);
@@ -243,10 +275,15 @@ FLOW.forEach((step,i)=>{
     <div class="center">
       <h1>${step.title}</h1>
       <div class="option show">${step.options[0]}</div>
-      <div class="hint">
-        <span>↑ SKIP</span>
-        <span>↓ SELECT</span>
-        <span>← → BROWSE</span>
+      <div class="controls">
+        <div class="nav-row">
+          <button class="control-btn" onclick="triggerAction('left')">← BROWSE</button>
+          <button class="control-btn" onclick="triggerAction('right')">BROWSE →</button>
+        </div>
+        <div class="nav-row">
+          <button class="control-btn skip-btn" onclick="triggerAction('skip')">↑ SKIP</button>
+          <button class="control-btn select-btn" onclick="triggerAction('select')">↓ SELECT</button>
+        </div>
       </div>
     </div>`;
   app.appendChild(s);
@@ -265,26 +302,65 @@ app.appendChild(final);
 slides.push(final);
 
 /* ===============================
-   TOUCH HANDLING
+   ACTIONS
 ================================ */
-let sx=0,sy=0;
-app.addEventListener("touchstart",e=>{
-  sx=e.touches[0].clientX;
-  sy=e.touches[0].clientY;
+window.triggerAction = function(action) {
+  const slide = slides[idx];
+  if(!slide.dataset.key){
+    if(action==='select' || action==='skip') next();
+    return;
+  }
+  
+  const optEl = slide.querySelector(".option");
+  let opt = +slide.dataset.opt;
+  const opts = FLOW[idx].options;
+  
+  if(action === 'skip') {
+    toast("Skipped");
+    next();
+  } else if (action === 'select') {
+    STATE[slide.dataset.key] = opts[opt];
+    toast("Selected");
+    next();
+  } else if (action === 'right') {
+    opt = (opt + 1) % opts.length;
+    slide.dataset.opt = opt;
+    swapOption(optEl, opts[opt], "right");
+  } else if (action === 'left') {
+    opt = (opt - 1 + opts.length) % opts.length;
+    slide.dataset.opt = opt;
+    swapOption(optEl, opts[opt], "left");
+  }
+};
+
+/* ===============================
+   POINTER & TOUCH HANDLING
+================================ */
+let sx=0,sy=0,isDown=false;
+
+app.addEventListener("pointerdown",e=>{
+  if (e.target.closest('.control-btn')) return; // ignore swipe start on buttons
+  isDown=true;
+  sx=e.clientX;
+  sy=e.clientY;
 },{passive:true});
 
-app.addEventListener("touchmove",e=>{
-  const dy=e.touches[0].clientY-sy;
+app.addEventListener("pointermove",e=>{
+  if(!isDown) return;
+  const dy=e.clientY-sy;
   if(dy>0){
-    e.preventDefault();
     document.getElementById("depth").style.height=Math.min(dy/2,100)+"%";
   }
 },{passive:false});
 
-app.addEventListener("touchend",e=>{
-  const dx=e.changedTouches[0].clientX-sx;
-  const dy=e.changedTouches[0].clientY-sy;
+app.addEventListener("pointerup",e=>{
+  if(!isDown) return;
+  isDown=false;
+  const dx=e.clientX-sx;
+  const dy=e.clientY-sy;
   document.getElementById("depth").style.height="0%";
+
+  if(Math.abs(dx) < 30 && Math.abs(dy) < 30) return; // threshold for swipe
 
   const slide=slides[idx];
   if(!slide.dataset.key){
@@ -292,38 +368,32 @@ app.addEventListener("touchend",e=>{
     return;
   }
 
-  const optEl = slide.querySelector(".option");
-  let opt = +slide.dataset.opt;
-  const opts = FLOW[idx].options;
-
   // SWIPE UP = SKIP
   if(dy < -60 && Math.abs(dy) > Math.abs(dx)){
-    toast("Skipped");
-    next();
+    triggerAction('skip');
     return;
   }
 
   // SWIPE DOWN = SELECT
   if(dy > 60 && Math.abs(dy) > Math.abs(dx)){
-    STATE[slide.dataset.key] = opts[opt];
-    toast("Selected");
-    next();
+    triggerAction('select');
     return;
   }
 
   // RIGHT
   if(dx > 60){
-    opt = (opt + 1) % opts.length;
-    slide.dataset.opt = opt;
-    swapOption(optEl, opts[opt], "right");
+    triggerAction('right');
   }
 
   // LEFT
   if(dx < -60){
-    opt = (opt - 1 + opts.length) % opts.length;
-    slide.dataset.opt = opt;
-    swapOption(optEl, opts[opt], "left");
+    triggerAction('left');
   }
+});
+
+app.addEventListener("pointercancel",e=>{
+  isDown=false;
+  document.getElementById("depth").style.height="0%";
 });
 
 /* ===============================
