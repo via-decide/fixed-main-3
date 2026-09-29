@@ -11,6 +11,7 @@
 :root{
   --bg:#07070f; --text:#f0f0f0; --accent:#ff671f; --go:#00e676;
   --card:#111120; --border:rgba(255,255,255,.07); --mono:'Courier New',monospace;
+  --amber:#ffb400;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow:hidden;touch-action:none;}
@@ -35,7 +36,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 /* ── INFO OVERLAY ─────── */
 #info{position:fixed;inset:0;z-index:500;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:36px 28px;transition:opacity .5s,transform .5s cubic-bezier(.2,.8,.2,1);}
 #info.hide{opacity:0;transform:translateY(-28px);pointer-events:none;}
-.i-inner{width:100%;max-width:440px;display:flex;flex-direction:column;gap:20px;}
+.i-inner{width:100%;max-width:460px;display:flex;flex-direction:column;gap:20px;}
 .i-step{display:none;flex-direction:column;gap:16px;}
 .i-step.on{display:flex;}
 .i-kicker{font-family:var(--mono);font-size:.65rem;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;}
@@ -45,6 +46,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 .i-pill{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.05);border:1px solid var(--border);padding:8px 14px;border-radius:100px;font-family:var(--mono);font-size:.72rem;color:#aaa;}
 .i-pill em{font-style:normal;color:var(--accent);}
 .i-pill.g em{color:var(--go);}
+.i-pill.a em{color:var(--amber);}
 .i-cta{background:rgba(255,103,31,.12);border:1px solid rgba(255,103,31,.3);color:var(--accent);font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.9rem;padding:16px;border-radius:14px;cursor:pointer;transition:background .2s;text-align:center;}
 .i-cta:hover{background:rgba(255,103,31,.22);}
 .i-dots{display:flex;gap:6px;}
@@ -105,13 +107,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
   display:flex;align-items:center;gap:8px;
   border-bottom:1px solid rgba(255,255,255,.04);
 }
-.ax-pill{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:.62rem;color:#333;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);padding:4px 10px;border-radius:100px;}
+.ax-pill{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:.62rem;color:#555;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);padding:4px 10px;border-radius:100px;}
 .ax-pill b{color:var(--accent);}
 .ax-pill.g b{color:var(--go);}
-#ax-q-label{margin-left:auto;font-family:'Space Grotesk',sans-serif;font-size:.75rem;font-weight:700;color:var(--text);opacity:.6;}
+.ax-pill.a b{color:var(--amber);}
+#ax-q-label{margin-left:auto;font-family:'Space Grotesk',sans-serif;font-size:.75rem;font-weight:700;color:var(--text);opacity:.7;}
 
 /* ── OPTION SCROLL AREA ─────────────────── */
-/* Horizontal slider of question "columns" */
 #h-slider{
   flex:1;
   display:flex;
@@ -141,7 +143,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
   border-radius:20px;
   padding:22px 22px 22px 20px;
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   gap:18px;
   cursor:pointer;
   transition:all .25s;
@@ -161,18 +163,60 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 }
 .opt-card.picked::after{
   content:'✓';
-  position:absolute;right:18px;top:50%;transform:translateY(-50%);
+  position:absolute;right:18px;top:22px;
   color:var(--go);font-size:1.1rem;font-weight:900;
 }
-.opt-icon{font-size:1.8rem;flex-shrink:0;}
-.opt-body{flex:1;min-width:0;}
-.opt-title{font-family:'Space Grotesk',sans-serif;font-size:clamp(.95rem,3.5vw,1.1rem);font-weight:700;margin-bottom:4px;line-height:1.2;}
-.opt-desc{font-size:.78rem;color:#666;line-height:1.45;}
-.opt-tag{
-  margin-left:auto;flex-shrink:0;
-  font-family:var(--mono);font-size:.58rem;
-  color:#2a2a3a;align-self:flex-start;
-  writing-mode:initial;
+.opt-card.has-demo{
+  border-color:rgba(255,103,31,.28);
+  background:linear-gradient(180deg,#151224,#0e0e18);
+}
+.opt-icon{font-size:1.8rem;flex-shrink:0;margin-top:2px;}
+.opt-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;}
+
+.opt-head-row{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.opt-title{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:clamp(.95rem,3.5vw,1.1rem);
+  font-weight:700;line-height:1.2;
+}
+.opt-price-pill{
+  font-family:var(--mono);font-size:.7rem;font-weight:800;
+  color:#ffb400;background:rgba(255,180,0,.12);border:1px solid rgba(255,180,0,.3);
+  padding:2px 8px;border-radius:6px;letter-spacing:.3px;
+}
+.opt-badge{
+  font-family:var(--mono);font-size:.6rem;font-weight:800;
+  color:var(--accent);background:rgba(255,103,31,.12);border:1px solid rgba(255,103,31,.3);
+  padding:2px 8px;border-radius:6px;letter-spacing:.5px;text-transform:uppercase;
+}
+.opt-desc{font-size:.78rem;color:#777;line-height:1.45;}
+
+.opt-tags{
+  display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;
+}
+.opt-tag-chip{
+  font-family:var(--mono);font-size:.65rem;color:#8a8a9a;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  padding:3px 9px;border-radius:100px;
+}
+
+.opt-demo-action{
+  margin-top:8px;
+}
+.opt-demo-link{
+  display:inline-flex;align-items:center;gap:8px;
+  background:linear-gradient(135deg,rgba(255,103,31,.22),rgba(255,103,31,.08));
+  border:1px solid rgba(255,103,31,.45);color:#ff9e66;
+  text-decoration:none;font-family:'Space Grotesk',sans-serif;font-size:.78rem;font-weight:700;
+  padding:8px 16px;border-radius:12px;transition:all .2s;
+  box-shadow:0 2px 12px rgba(255,103,31,.15);
+}
+.opt-demo-link:hover{
+  background:linear-gradient(135deg,rgba(255,103,31,.38),rgba(255,103,31,.18));
+  border-color:var(--accent);color:#fff;transform:translateY(-1px);
+  box-shadow:0 6px 20px rgba(255,103,31,.3);
 }
 
 /* ── BOTTOM CONFIRM BAR ─────────────────── */
@@ -227,34 +271,55 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
   #v-sidebar{
     display:flex!important;
     flex-direction:column;
-    width:260px;flex-shrink:0;
+    width:280px;flex-shrink:0;
     border-right:1px solid var(--border);
-    padding:40px 28px;
+    padding:36px 24px 28px;
     background:rgba(255,103,31,.02);
     position:sticky;top:0;height:100vh;
-    overflow:hidden;
+    overflow-y:auto;
   }
-  .v-logo{font-family:'Space Grotesk',sans-serif;font-size:.75rem;font-weight:700;color:var(--accent);background:rgba(255,103,31,.1);border:1px solid rgba(255,103,31,.22);padding:5px 12px;border-radius:100px;display:inline-block;margin-bottom:32px;}
-  .v-title{font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:700;color:#555;margin-bottom:16px;text-transform:uppercase;letter-spacing:.06em;font-size:.7rem;}
+  .v-logo{font-family:'Space Grotesk',sans-serif;font-size:.75rem;font-weight:700;color:var(--accent);background:rgba(255,103,31,.1);border:1px solid rgba(255,103,31,.22);padding:5px 12px;border-radius:100px;display:inline-block;margin-bottom:24px;}
+  .v-title{font-family:'Space Grotesk',sans-serif;font-size:.7rem;font-weight:700;color:#555;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em;}
   .v-item{
     display:flex;align-items:center;gap:12px;
-    padding:14px 14px;border-radius:14px;
+    padding:12px 14px;border-radius:14px;
     cursor:pointer;transition:all .2s;margin-bottom:4px;
     border:1px solid transparent;
   }
   .v-item:hover{background:rgba(255,255,255,.04);}
   .v-item.active{background:rgba(255,103,31,.1);border-color:rgba(255,103,31,.2);}
-  .v-icon{font-size:1.4rem;flex-shrink:0;}
+  .v-icon{font-size:1.3rem;flex-shrink:0;}
   .v-label{font-family:'Space Grotesk',sans-serif;font-size:.85rem;font-weight:700;}
   .v-item.active .v-label{color:var(--accent);}
   .v-item.done .v-label{color:var(--go);}
   .v-done-mark{margin-left:auto;color:var(--go);font-size:.9rem;}
-  .v-prog{margin-top:auto;}
-  .v-prog-label{font-family:var(--mono);font-size:.62rem;color:#333;margin-bottom:8px;}
+
+  /* Featured Case Study Card in Sidebar */
+  .v-demo-box{
+    margin-top:20px;
+    padding:14px;
+    border-radius:14px;
+    background:linear-gradient(145deg,rgba(255,103,31,.12),rgba(255,180,0,.04));
+    border:1px solid rgba(255,103,31,.3);
+    text-decoration:none;
+    display:flex;flex-direction:column;gap:5px;
+    transition:all .2s;
+  }
+  .v-demo-box:hover{
+    border-color:var(--accent);
+    transform:translateY(-1px);
+    box-shadow:0 6px 20px rgba(255,103,31,.18);
+  }
+  .v-demo-tag{font-family:var(--mono);font-size:.58rem;font-weight:800;color:var(--accent);letter-spacing:.5px;text-transform:uppercase;}
+  .v-demo-title{font-family:'Space Grotesk',sans-serif;font-size:.85rem;font-weight:800;color:#fff;}
+  .v-demo-sub{font-size:.7rem;color:#888;line-height:1.3;}
+
+  .v-prog{margin-top:auto;padding-top:16px;}
+  .v-prog-label{font-family:var(--mono);font-size:.62rem;color:#444;margin-bottom:8px;}
   .v-prog-track{height:2px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;}
   .v-prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--go));border-radius:2px;transition:width .5s cubic-bezier(.4,0,.2,1);width:0%;}
-  .v-kb{margin-top:16px;font-family:var(--mono);font-size:.6rem;color:#222;display:flex;flex-wrap:wrap;gap:3px;align-items:center;}
-  .kbd{display:inline-block;background:#111120;border:1px solid #1e1e30;border-radius:4px;padding:2px 6px;font-size:.58rem;color:#444;}
+  .v-kb{margin-top:14px;font-family:var(--mono);font-size:.6rem;color:#333;display:flex;flex-wrap:wrap;gap:3px;align-items:center;}
+  .kbd{display:inline-block;background:#111120;border:1px solid #1e1e30;border-radius:4px;padding:2px 6px;font-size:.58rem;color:#555;}
 
   /* Main right area */
   #main-right{display:flex!important;flex-direction:column;flex:1;overflow:hidden;}
@@ -263,7 +328,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
   #axis-bar{padding:20px 32px 14px;}
   #h-slider{flex:1;}
   .q-column{padding:24px 40px 60px;}
-  .opt-card{padding:26px 28px;}
+  .opt-card{padding:24px 26px;}
   .opt-card:hover{transform:translateX(4px);}
   .opt-icon{font-size:2rem;}
   .opt-title{font-size:1.15rem;}
@@ -293,7 +358,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     <div class="i-step on" id="is0">
       <div class="i-kicker">Welcome · Kutch Automations</div>
       <div class="i-h">Find your setup in 60 sec</div>
-      <div class="i-p">4 quick questions about your business. Browse options and tap to pick — no typing needed.</div>
+      <div class="i-p">4 quick questions about your business. Browse options and tap to pick — including live demos like our Food Decider with Voice UI & demo pricing.</div>
+      <div class="i-pills">
+        <div class="i-pill a"><em>🍲 Live Demo</em> Food Decider</div>
+        <div class="i-pill"><em>🎙️ Voice UI</em> Gujarati/Hindi/EN</div>
+        <div class="i-pill g"><em>₹0</em> Demo Prices</div>
+      </div>
       <button class="i-cta" onclick="infoNext()">HOW IT WORKS →</button>
     </div>
     <div class="i-step" id="is1">
@@ -313,10 +383,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     <div class="v-logo">SWIPE · SETUP</div>
     <div class="v-title">Questions</div>
     <div id="v-items"></div>
+
+    <!-- Live Case Study Link -->
+    <a href="/Jalaram-food-court-rajkot/" target="_blank" class="v-demo-box" title="Open live Food Decider case study">
+      <div class="v-demo-tag">LIVE CASE STUDY ↗</div>
+      <div class="v-demo-title">🍲 Food Decider (Rajkot)</div>
+      <div class="v-demo-sub">Trilingual Voice UI · Demo ₹120+ Menu · Direct WhatsApp</div>
+    </a>
+
     <div class="v-prog">
       <div class="v-prog-label" id="v-prog-label">0 / 4 answered</div>
       <div class="v-prog-track"><div class="v-prog-fill" id="v-prog-fill"></div></div>
-      <div class="v-kb" style="margin-top:14px;">
+      <div class="v-kb">
         <span class="kbd">↑</span><span class="kbd">↓</span>&nbsp;browse options&nbsp;
         <span class="kbd">←</span><span class="kbd">→</span>&nbsp;switch question&nbsp;
         <span class="kbd">↵</span>&nbsp;select
@@ -327,12 +405,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
   <!-- Main right area -->
   <div id="main-right">
     <!-- Mobile: horizontal question tabs -->
-    <div id="top-nav" id="top-nav"></div>
+    <div id="top-nav"></div>
 
     <!-- Axis hint bar -->
     <div id="axis-bar">
       <div class="ax-pill" id="ax-horiz"><b>← →</b>&nbsp;Switch question</div>
       <div class="ax-pill g"><b>↑ ↓</b>&nbsp;Browse options</div>
+      <div class="ax-pill a"><b>🍲 Food Decider</b>&nbsp;Linked</div>
       <div id="ax-q-label"></div>
     </div>
 
@@ -364,32 +443,120 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 <script>
 const WA="916351537770";
 const QS=[
-  {key:"business_type",label:"Business Type",icon:"🏢",title:"What's your business?",opts:[
-    {icon:"🍽️",title:"Single Restaurant",desc:"One location, dine-in or takeaway — you manage the full experience."},
-    {icon:"☁️",title:"Cloud Kitchen",desc:"Delivery-only. No front-of-house. Speed and orders are everything."},
-    {icon:"🏪",title:"Multiple Outlets",desc:"More than one branch. Central control with local flexibility."},
-    {icon:"🚴",title:"Delivery Operator",desc:"You handle last-mile logistics for restaurants or brands."},
-    {icon:"⚙️",title:"Internal / Personal",desc:"Staff tools, personal tracking, or internal testing."},
-  ]},
-  {key:"primary_goal",label:"Main Goal",icon:"🎯",title:"What's your main goal?",opts:[
-    {icon:"🔓",title:"Cut Platform Fees",desc:"Stop paying 20–30% to aggregators. Own your orders directly."},
-    {icon:"💬",title:"WhatsApp Orders",desc:"Simple, zero-app ordering — customers just message you."},
-    {icon:"👥",title:"Staff Tools",desc:"Internal tools for kitchen staff, managers, or delivery teams."},
-    {icon:"⚡",title:"Faster Decisions",desc:"Help customers choose faster — reduce drop-offs."},
-    {icon:"🤔",title:"Still Exploring",desc:"Evaluating what's possible for your setup."},
-  ]},
-  {key:"order_volume",label:"Order Volume",icon:"📦",title:"How many orders per day?",opts:[
-    {icon:"🌱",title:"Under 10 / day",desc:"Just starting out or running a small personal operation."},
-    {icon:"📈",title:"10 – 50 / day",desc:"Steady business. Reliable, low-maintenance tooling needed."},
-    {icon:"🔥",title:"50 – 200 / day",desc:"High volume. Automation and reliability are critical."},
-    {icon:"🚀",title:"200+ / day",desc:"Enterprise-scale. Custom integrations and priority support."},
-  ]},
-  {key:"pricing_intent",label:"Preferred Plan",icon:"💳",title:"How do you want to pay?",opts:[
-    {icon:"🎁",title:"Free Trial",desc:"Test the system before any commitment — totally fine."},
-    {icon:"📅",title:"Monthly Plan",desc:"Predictable recurring cost. Simple budgeting, no surprises."},
-    {icon:"📩",title:"Pay Per Inquiry",desc:"Only pay when you receive real, qualified customer requests."},
-    {icon:"🤝",title:"Custom Deal",desc:"Tailored agreement — volume, features, or long-term."},
-  ]}
+  {
+    key:"business_type",
+    label:"Business Type",
+    icon:"🏢",
+    title:"What's your business use case?",
+    opts:[
+      {
+        icon:"🍲",
+        title:"Food Decider (Live Demo)",
+        badge:"LIVE DEMO · VOICE UI",
+        price:"Demo ₹120+",
+        desc:"Rajkot food court engine with voice ordering (Gujarati/Hindi/English), live demo menu pricing, cart logic & WhatsApp orders.",
+        demoUrl:"/Jalaram-food-court-rajkot/",
+        tags:["🎙️ Voice UI", "₹ Demo Price", "⚡ WhatsApp Order", "Trilingual"]
+      },
+      {
+        icon:"🍽️",
+        title:"Single Restaurant",
+        price:"Standalone",
+        desc:"One location, dine-in or takeaway — eliminate 20-30% aggregator commissions and own your customer direct.",
+        tags:["Zero Commission", "Dine-in / Takeaway", "Direct Payouts"]
+      },
+      {
+        icon:"☁️",
+        title:"Cloud Kitchen",
+        price:"Multi-Brand",
+        desc:"Delivery-only setup. Fast menu browsing, multi-brand kitchen routing and instant order generation.",
+        tags:["Fast Order Flow", "Kitchen Routing", "High Volume"]
+      },
+      {
+        icon:"🏪",
+        title:"Multiple Outlets / Chain",
+        price:"Franchise",
+        desc:"Multi-branch operations with centralized menu control and outlet-specific WhatsApp routing.",
+        tags:["Central Control", "Multi-Branch", "Location Routing"]
+      },
+      {
+        icon:"🚴",
+        title:"Delivery Operator / Fleet",
+        price:"Logistics",
+        desc:"Direct last-mile logistics routing and rider dispatch for local restaurants and merchant stores.",
+        tags:["Fleet Dispatch", "Last-Mile", "Low Latency"]
+      },
+      {
+        icon:"⚙️",
+        title:"Internal / Personal Tool",
+        price:"Custom",
+        desc:"Employee canteen, internal testing, pantry ordering, or custom business decision engine.",
+        tags:["Internal Ops", "Custom Workflow"]
+      }
+    ]
+  },
+  {
+    key:"primary_goal",
+    label:"Main Goal",
+    icon:"🎯",
+    title:"What's your primary goal?",
+    opts:[
+      {
+        icon:"🎙️",
+        title:"Voice UI & Smart Ordering",
+        desc:"Let customers order by speaking naturally in Gujarati, Hindi or English with automatic item matching.",
+        tags:["Trilingual Voice", "Speech-to-Cart", "Hands-Free"]
+      },
+      {
+        icon:"🔓",
+        title:"Cut 20–30% Aggregator Fees",
+        desc:"Stop paying hefty platform cuts to aggregators. Retain 100% of your earnings and customer phone numbers.",
+        tags:["100% Revenue", "Zero Commission", "Direct Customer Data"]
+      },
+      {
+        icon:"💬",
+        title:"WhatsApp Direct Checkout",
+        desc:"Zero app download barrier. Customers pick their items and push a formatted order straight into WhatsApp.",
+        tags:["Zero Friction", "Instant Chat", "Universal Access"]
+      },
+      {
+        icon:"⚡",
+        title:"Fast Decision UX",
+        desc:"Tinder-style swipe & 2D decision grid that cuts decision fatigue and boosts order conversions.",
+        tags:["High Conversion", "Zero Drop-off", "Mobile First"]
+      },
+      {
+        icon:"👥",
+        title:"Kitchen & Staff Operations",
+        desc:"Clean operational interface for staff, dispatchers, and order tracking with no complex training.",
+        tags:["Staff Simplicity", "Dispatch Ready"]
+      }
+    ]
+  },
+  {
+    key:"order_volume",
+    label:"Order Volume",
+    icon:"📦",
+    title:"What's your expected order volume?",
+    opts:[
+      {icon:"🌱",title:"Under 10 / day",desc:"Starting out, pop-up stall or boutique operation.",tags:["Starter","Zero Stress"]},
+      {icon:"📈",title:"10 – 50 / day",desc:"Steady daily flow. Reliable, zero-maintenance direct ordering.",tags:["Growth","Steady Operations"]},
+      {icon:"🔥",title:"50 – 200 / day",desc:"High volume outlet. Speed, automated totals and instant dispatch are key.",tags:["High Volume","Automation"]},
+      {icon:"🚀",title:"200+ / day",desc:"Chain or busy food court. Multi-channel routing and custom integrations.",tags:["Enterprise","Custom Scale"]}
+    ]
+  },
+  {
+    key:"pricing_intent",
+    label:"Preferred Plan",
+    icon:"💳",
+    title:"How would you like to get started?",
+    opts:[
+      {icon:"🎁",title:"Free Trial",price:"₹0",desc:"Test the complete system with your menu before any commitment — 100% risk free.",tags:["7 Days Full Access","No Card Required"]},
+      {icon:"📅",title:"Monthly Plan",price:"₹1,499/mo",desc:"Predictable recurring pricing with zero commission taken from any of your orders.",tags:["Unlimited Orders","Zero Commission"]},
+      {icon:"📩",title:"Pay Per Inquiry",price:"₹5/lead",desc:"Only pay when real, qualified customer orders or inquiries land in your WhatsApp.",tags:["Pay As You Grow","Full Attribution"]},
+      {icon:"🤝",title:"Custom Enterprise",price:"Custom",desc:"Tailored package for multi-outlet chains, custom voice recognition and ERP links.",tags:["Custom Voice UI","Dedicated Setup"]}
+    ]
+  }
 ];
 
 /* ── STATE ─────────────────────────────────────── */
@@ -410,18 +577,17 @@ const isMob=()=>window.innerWidth<900;
 
 /* ── INTRO → INFO ──────────────────────────────── */
 window.addEventListener('load',()=>{
-  // Patch info text
   const mob=isMob();
   document.getElementById('info-p2').textContent=mob
     ?'Swipe LEFT or RIGHT to switch between questions. Scroll UP or DOWN to browse options within each question. Tap to select.'
     :'Use the sidebar to jump between questions. Scroll up/down to browse options within each question. Click to select, then confirm.';
   document.getElementById('info-pills2').innerHTML=mob
-    ?`<div class="i-pill"><em>← →</em> Switch question</div><div class="i-pill g"><em>↑ ↓</em> Browse options</div><div class="i-pill"><em>Tap</em> Select</div>`
-    :`<div class="i-pill"><em>Sidebar</em> Switch question</div><div class="i-pill g"><em>↑ ↓</em> Browse options</div><div class="i-pill"><em>Click</em> Select</div>`;
+    ?`<div class="i-pill"><em>← →</em> Switch question</div><div class="i-pill g"><em>↑ ↓</em> Browse options</div><div class="i-pill a"><em>🍲 Demo</em> Food Decider</div><div class="i-pill"><em>Tap</em> Select</div>`
+    :`<div class="i-pill"><em>Sidebar</em> Switch question</div><div class="i-pill g"><em>↑ ↓</em> Browse options</div><div class="i-pill a"><em>🍲 Demo</em> Food Decider</div><div class="i-pill"><em>Click</em> Select</div>`;
   setTimeout(()=>{
     document.getElementById('intro').classList.add('out');
     setTimeout(()=>document.getElementById('intro').style.display='none',800);
-  },2500);
+  },2400);
 });
 
 let _infoStep=0;
@@ -482,7 +648,6 @@ function buildColumns(){
     const col=document.createElement('div');
     col.className='q-column';
     col.id=`col${qi}`;
-    // Translate all columns by default; active one = translateX(0)
     col.style.transform=`translateX(${qi*100}%)`;
     col.style.position='absolute';
     col.style.inset='0';
@@ -490,10 +655,35 @@ function buildColumns(){
 
     q.opts.forEach((opt,oi)=>{
       const card=document.createElement('div');
-      card.className='opt-card';
+      card.className='opt-card' + (opt.demoUrl ? ' has-demo' : '');
       card.id=`c${qi}_${oi}`;
       if(STATE[q.key]===opt.title) card.classList.add('picked');
-      card.innerHTML=`<div class="opt-icon">${opt.icon}</div><div class="opt-body"><div class="opt-title">${opt.title}</div><div class="opt-desc">${opt.desc}</div></div>`;
+
+      const priceHtml = opt.price ? `<span class="opt-price-pill">${opt.price}</span>` : '';
+      const badgeHtml = opt.badge ? `<span class="opt-badge">${opt.badge}</span>` : '';
+      const tagsHtml = opt.tags && opt.tags.length ? `<div class="opt-tags">${opt.tags.map(t=>`<span class="opt-tag-chip">${t}</span>`).join('')}</div>` : '';
+      const demoHtml = opt.demoUrl ? `
+        <div class="opt-demo-action">
+          <a href="${opt.demoUrl}" target="_blank" class="opt-demo-link" onclick="event.stopPropagation()" title="Open live Food Decider demo with Voice UI and Demo Price">
+            <span>▶ Try Live Food Decider (Voice & ₹ Demo)</span>
+            <span>↗</span>
+          </a>
+        </div>
+      ` : '';
+
+      card.innerHTML=`
+        <div class="opt-icon">${opt.icon}</div>
+        <div class="opt-body">
+          <div class="opt-head-row">
+            <div class="opt-title">${opt.title}</div>
+            ${priceHtml}
+            ${badgeHtml}
+          </div>
+          <div class="opt-desc">${opt.desc}</div>
+          ${tagsHtml}
+          ${demoHtml}
+        </div>
+      `;
       card.onclick=()=>pickOpt(qi,oi);
       col.appendChild(card);
     });
@@ -609,11 +799,8 @@ document.addEventListener('keydown',e=>{
 
 /* ── TOUCH SWIPE (horizontal) ─────────────────────── */
 let _tx=0,_ty=0,_tdown=false;
-const slider=document.getElementById('h-slider');
-
-// We need to init after buildApp() but let's attach to document
 document.addEventListener('pointerdown',e=>{
-  if(e.target.closest('.opt-card,.i-cta,#btn-skip,#btn-confirm,.q-tab,.v-item')) return;
+  if(e.target.closest('.opt-card,.i-cta,#btn-skip,#btn-confirm,.q-tab,.v-item,.v-demo-box,.opt-demo-link')) return;
   _tx=e.clientX;_ty=e.clientY;_tdown=true;
 },{passive:true});
 document.addEventListener('pointerup',e=>{
