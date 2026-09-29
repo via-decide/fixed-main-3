@@ -173,6 +173,24 @@ h1{
 {
   "steps":[
     {
+      "type": "info",
+      "title": "Welcome to Custom Swipe Engine",
+      "text": "This interactive form helps us understand your exact needs quickly.<br><br>Let's take a quick tour on how it works.",
+      "button": "START TOUR ↓"
+    },
+    {
+      "type": "info",
+      "title": "Browse Options",
+      "text": "Swipe <strong>Left</strong> or <strong>Right</strong> (or tap BROWSE) to view different choices for each question.",
+      "button": "NEXT ↓"
+    },
+    {
+      "type": "info",
+      "title": "Select or Skip",
+      "text": "Swipe <strong>Down</strong> to SELECT an option.<br><br>Swipe <strong>Up</strong> to SKIP if it doesn't apply.",
+      "button": "GOT IT, LET'S GO ↓"
+    },
+    {
       "key":"business_type",
       "title":"Your Business Type",
       "options":[
@@ -267,25 +285,38 @@ function swapOption(el,text,dir){
 FLOW.forEach((step,i)=>{
   const s=document.createElement("section");
   s.className="slide"+(i===0?" active":"");
-  s.dataset.key=step.key;
-  s.dataset.opt=0;
+  
+  if (step.type === "info") {
+    s.innerHTML=`
+      <div class="header"><span>SWIPE · TUTORIAL</span></div>
+      <div class="center">
+        <h1>${step.title}</h1>
+        <p style="font-size:1.2rem; color:#aaa; line-height:1.5; margin-bottom: 30px;">${step.text}</p>
+        <div class="controls">
+          <button class="control-btn select-btn" onclick="next()">${step.button || 'NEXT ↓'}</button>
+        </div>
+      </div>`;
+  } else {
+    s.dataset.key=step.key;
+    s.dataset.opt=0;
 
-  s.innerHTML=`
-    <div class="header"><span>SWIPE · CUSTOM SETUP</span></div>
-    <div class="center">
-      <h1>${step.title}</h1>
-      <div class="option show">${step.options[0]}</div>
-      <div class="controls">
-        <div class="nav-row">
-          <button class="control-btn" onclick="triggerAction('left')">← BROWSE</button>
-          <button class="control-btn" onclick="triggerAction('right')">BROWSE →</button>
+    s.innerHTML=`
+      <div class="header"><span>SWIPE · CUSTOM SETUP</span></div>
+      <div class="center">
+        <h1>${step.title}</h1>
+        <div class="option show">${step.options[0]}</div>
+        <div class="controls">
+          <div class="nav-row">
+            <button class="control-btn" onclick="triggerAction('left')">← BROWSE</button>
+            <button class="control-btn" onclick="triggerAction('right')">BROWSE →</button>
+          </div>
+          <div class="nav-row">
+            <button class="control-btn skip-btn" onclick="triggerAction('skip')">↑ SKIP</button>
+            <button class="control-btn select-btn" onclick="triggerAction('select')">↓ SELECT</button>
+          </div>
         </div>
-        <div class="nav-row">
-          <button class="control-btn skip-btn" onclick="triggerAction('skip')">↑ SKIP</button>
-          <button class="control-btn select-btn" onclick="triggerAction('select')">↓ SELECT</button>
-        </div>
-      </div>
-    </div>`;
+      </div>`;
+  }
   app.appendChild(s);
   slides.push(s);
 });
@@ -364,7 +395,7 @@ app.addEventListener("pointerup",e=>{
 
   const slide=slides[idx];
   if(!slide.dataset.key){
-    if(dy>60) next();
+    if(dy>60 || dy<-60 || dx>60 || dx<-60) next();
     return;
   }
 
